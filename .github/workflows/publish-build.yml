@@ -47,6 +47,10 @@ jobs:
       run: |
         docker build -t taskeden.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ matrix.version }} .
         
+    - name: Push Docker Image
+      run: |
+        docker push taskeden.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ matrix.version }}
+    
     - name: Create Build Info
       run: |
         # Set build name and number
@@ -59,25 +63,6 @@ jobs:
         # Add Git information
         jfrog rt build-add-git
     
-    - name: Push Docker Image
-      run: |
-        docker push taskeden.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ matrix.version }}
-    
-    - name: Add Docker Package to Build
-      run: |
-        # Set build name and number
-        export JFROG_CLI_BUILD_NAME="${{ env.IMAGE_NAME }}-${{ matrix.version }}"
-        export JFROG_CLI_BUILD_NUMBER="${{ github.run_number }}"
-        
-        # Get the image digest
-        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' taskeden.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ matrix.version }} | cut -d'@' -f2)
-        
-        # Create metadata file
-        echo "taskeden.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}@${DIGEST}" > metadata.json
-        
-        # Add docker info to build
-        jfrog rt build-docker-create ${{ env.DOCKER_REPO }} --image-file metadata.json
-    
     - name: Publish Build Info
       run: |
         # Set build name and number
@@ -86,12 +71,6 @@ jobs:
         
         # Publish build info
         jfrog rt build-publish
-    
-    - name: Run Xray Scan
-      if: always()
-      run: |
-        # Scan the image with Xray (if available)
-        jfrog scan taskeden.jfrog.io/${{ env.DOCKER_REPO }}/${{ env.IMAGE_NAME }}:${{ matrix.version }} || echo "Xray scan not available or failed"
 
   summary:
     needs: build-and-publish
