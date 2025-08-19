@@ -6,14 +6,18 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const userRoutes = require('./routes/users');
 const { formatUserData, validateRequest } = require('./utils/helpers');
+const securityMiddleware = require('./security-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demoSecretKeyForMaskScanner.4v8Qw1Q2w3e4r5t6y7u8i9o0p';
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security middleware to mitigate body-parser vulnerabilities
+app.use(securityMiddleware);
+
+// Middleware with additional security configurations
+app.use(express.json({ limit: '1mb', strict: true }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // Basic logging middleware using moment (vulnerable version)
 app.use((req, res, next) => {
