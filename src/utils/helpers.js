@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const moment = require('moment');
+const { format, subDays, getUnixTime, parseISO } = require('date-fns');
 const validator = require('validator');
 
 /**
@@ -42,12 +42,12 @@ function generateRandomUser() {
   return {
     username,
     email,
-    createdAt: moment().subtract(_.random(1, 100), 'days').toISOString(),
+    createdAt: subDays(new Date(), _.random(1, 100)).toISOString(),
     profile: {
       firstName,
       lastName,
       fullName: `${firstName} ${lastName}`,
-      joinDate: moment().subtract(_.random(1, 365), 'days').format('YYYY-MM-DD')
+      joinDate: format(subDays(new Date(), _.random(1, 365)), 'yyyy-MM-dd')
     }
   };
 }
@@ -120,18 +120,19 @@ function getUserStats(users) {
     return null;
   }
   
-  const now = moment();
+  const now = new Date();
   const activeUsers = _.filter(users, user => {
-    const lastActive = moment(user.updatedAt || user.createdAt);
-    return now.diff(lastActive, 'days') <= 30;
+    const lastActive = parseISO(user.updatedAt || user.createdAt);
+    const daysDiff = Math.floor((now - lastActive) / (1000 * 60 * 60 * 24));
+    return daysDiff <= 30;
   });
   
   return {
     total: users.length,
     active: activeUsers.length,
     inactive: users.length - activeUsers.length,
-    newest: _.maxBy(users, user => moment(user.createdAt).unix()),
-    oldest: _.minBy(users, user => moment(user.createdAt).unix()),
+    newest: _.maxBy(users, user => getUnixTime(parseISO(user.createdAt))),
+    oldest: _.minBy(users, user => getUnixTime(parseISO(user.createdAt))),
     byDomain: _.countBy(users, user => {
       const email = user.email || '';
       return email.includes('@') ? email.split('@')[1] : 'unknown';
@@ -156,7 +157,7 @@ function processExternalData(data) {
       id: processed.id,
       name: processed.name,
       email: processed.email,
-      processedAt: moment().toISOString(),
+      processedAt: new Date().toISOString(),
       // This could be dangerous if the external data contains malicious properties
       ...processed.metadata
     };

@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const _ = require('lodash');
-const moment = require('moment');
+const { format, getUnixTime } = require('date-fns');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const userRoutes = require('./routes/users');
@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Basic logging middleware using moment (vulnerable version)
 app.use((req, res, next) => {
-  console.log(`${moment().format('YYYY-MM-DD HH:mm:ss')} - ${req.method} ${req.path}`);
+  console.log(`${format(new Date(), 'yyyy-MM-dd HH:mm:ss')} - ${req.method} ${req.path}`);
   next();
 });
 
@@ -28,7 +28,7 @@ app.use('/api/users', userRoutes);
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    timestamp: moment().toISOString(),
+    timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
 });
@@ -43,13 +43,13 @@ app.get('/api/external-data', async (req, res) => {
     res.json({
       success: true,
       data: processedData,
-      fetchedAt: moment().toISOString()
+      fetchedAt: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch external data',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -71,7 +71,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     // Generate JWT token (using vulnerable version)
     const token = jwt.sign(
-      { username, loginTime: moment().unix() },
+      { username, loginTime: getUnixTime(new Date()) },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -80,7 +80,7 @@ app.post('/api/auth/login', async (req, res) => {
       success: true,
       token,
       user: { username },
-      loginTime: moment().toISOString()
+      loginTime: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({
@@ -96,7 +96,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     success: false,
     error: 'Internal server error',
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -105,13 +105,13 @@ app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     error: 'Endpoint not found',
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Started at: ${moment().format('YYYY-MM-DD HH:mm:ss')}`);
+  console.log(`Started at: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`);
 });
 
 module.exports = app; 

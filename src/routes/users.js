@@ -1,6 +1,6 @@
 const express = require('express');
 const _ = require('lodash');
-const moment = require('moment');
+const { subDays } = require('date-fns');
 const validator = require('validator');
 const { formatUserData, generateRandomUser } = require('../utils/helpers');
 
@@ -8,9 +8,9 @@ const router = express.Router();
 
 // In-memory user storage (for demo purposes)
 let users = [
-  { id: 1, username: 'admin', email: 'admin@example.com', createdAt: moment().subtract(30, 'days').toISOString() },
-  { id: 2, username: 'user1', email: 'user1@example.com', createdAt: moment().subtract(15, 'days').toISOString() },
-  { id: 3, username: 'testuser', email: 'test@example.com', createdAt: moment().subtract(5, 'days').toISOString() }
+  { id: 1, username: 'admin', email: 'admin@example.com', createdAt: subDays(new Date(), 30).toISOString() },
+  { id: 2, username: 'user1', email: 'user1@example.com', createdAt: subDays(new Date(), 15).toISOString() },
+  { id: 3, username: 'testuser', email: 'test@example.com', createdAt: subDays(new Date(), 5).toISOString() }
 ];
 
 // Get all users
@@ -40,7 +40,7 @@ router.get('/', (req, res) => {
       total: filteredUsers.length,
       pages: Math.ceil(filteredUsers.length / limit)
     },
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -53,14 +53,14 @@ router.get('/:id', (req, res) => {
     return res.status(404).json({
       success: false,
       error: 'User not found',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
   res.json({
     success: true,
     data: formatUserData(user),
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -73,7 +73,7 @@ router.post('/', (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Username and email are required',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -81,7 +81,7 @@ router.post('/', (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid email format',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -94,7 +94,7 @@ router.post('/', (req, res) => {
     return res.status(409).json({
       success: false,
       error: 'User already exists',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -102,7 +102,7 @@ router.post('/', (req, res) => {
     id: _.maxBy(users, 'id').id + 1,
     username,
     email,
-    createdAt: moment().toISOString()
+    createdAt: new Date().toISOString()
   };
   
   users.push(newUser);
@@ -111,7 +111,7 @@ router.post('/', (req, res) => {
     success: true,
     data: formatUserData(newUser),
     message: 'User created successfully',
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -126,7 +126,7 @@ router.put('/:id', (req, res) => {
     return res.status(404).json({
       success: false,
       error: 'User not found',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -135,7 +135,7 @@ router.put('/:id', (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Invalid email format',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -143,14 +143,14 @@ router.put('/:id', (req, res) => {
   const updatedUser = _.merge(users[userIndex], {
     username: username || users[userIndex].username,
     email: email || users[userIndex].email,
-    updatedAt: moment().toISOString()
+    updatedAt: new Date().toISOString()
   });
   
   res.json({
     success: true,
     data: formatUserData(updatedUser),
     message: 'User updated successfully',
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -163,7 +163,7 @@ router.delete('/:id', (req, res) => {
     return res.status(404).json({
       success: false,
       error: 'User not found',
-      timestamp: moment().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -174,7 +174,7 @@ router.delete('/:id', (req, res) => {
     success: true,
     data: formatUserData(deletedUser),
     message: 'User deleted successfully',
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -195,7 +195,7 @@ router.post('/generate-random', (req, res) => {
     success: true,
     data: _.map(randomUsers, formatUserData),
     message: `Generated ${randomUsers.length} random users`,
-    timestamp: moment().toISOString()
+    timestamp: new Date().toISOString()
   });
 });
 
